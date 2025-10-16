@@ -1,6 +1,7 @@
 package transfi.web.app.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -36,6 +37,8 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private long tel;
     private String tag;
+
+    @JsonIgnore
     private String password;
     private String gender;
     @CreationTimestamp
@@ -46,12 +49,15 @@ public class User implements UserDetails {
     private List<String> roles;
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "owner")
+    @JsonIgnore
     private Card card;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Transaction> transactions;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Account> accounts;
 
     @Override

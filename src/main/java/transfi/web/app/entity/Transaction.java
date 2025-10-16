@@ -1,5 +1,6 @@
 package transfi.web.app.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -17,7 +18,8 @@ public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String txid;
+    private String txId;
+
 
     @Column(nullable = false)
     private Double txFee;
@@ -25,6 +27,7 @@ public class Transaction {
     private String description;
 
     private String sender;
+    private Double amount;
 
     private String receiver;
 
@@ -42,14 +45,16 @@ public class Transaction {
 
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false)
+    @JsonIgnore
     private User owner;
 
     @ManyToOne
-    @JoinColumn(name = "card_id", nullable = false)
+    @JoinColumn(name = "card_id", nullable = true)
     private Card card;
 
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
+    @JsonIgnore
     private Account account;
 
 }

@@ -38,11 +38,10 @@ import java.util.Map;
           if( user==null){
               throw new UsernameNotFoundException("Invalid username or password.");
           }
-
           authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userDto.getUsername(), userDto.getPassword()));
           authObject.put("token", "Bearer ".concat(jwtService.generateToken(userDto.getUsername())));
             authObject.put("user", user);
-            return null;
+            return authObject;
 
     }
       public User mapToUser(UserDto userDto) {

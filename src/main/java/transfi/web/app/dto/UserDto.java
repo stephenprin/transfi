@@ -13,7 +13,6 @@ import java.util.Date;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-
 public class UserDto {
     private String firstname;
     private String lastname;
