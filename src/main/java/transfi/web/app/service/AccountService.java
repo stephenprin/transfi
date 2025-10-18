@@ -3,6 +3,7 @@ package transfi.web.app.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import transfi.web.app.dto.AccountDto;
+import transfi.web.app.dto.ConvertDto;
 import transfi.web.app.dto.TransferDto;
 import transfi.web.app.entity.Account;
 import transfi.web.app.entity.Transaction;
@@ -37,5 +38,9 @@ public class AccountService {
 
     public Map<String, Double> getExchangeRate(){
         return exchangeRateService.getRates();
+    }
+
+    public Transaction convertCurrency(ConvertDto convertDto, User user) throws Exception {
+        return accountHelper.convertCurrency(convertDto, user);
     }
 }

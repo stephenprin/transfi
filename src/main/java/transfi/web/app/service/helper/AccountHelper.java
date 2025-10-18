@@ -4,14 +4,17 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import transfi.web.app.dto.AccountDto;
+import transfi.web.app.dto.ConvertDto;
 import transfi.web.app.entity.*;
 import transfi.web.app.repository.AccountRepository;
 import transfi.web.app.repository.TransactionRepository;
+import transfi.web.app.service.ExchangeRateService;
 import transfi.web.app.util.RandomUtil;
 
 import javax.naming.OperationNotSupportedException;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ import java.util.Map;
 public class AccountHelper {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
+    private final ExchangeRateService exchangeRateService;
 
     private final Map<String, String> CURRENCIES = Map.of(
             "USD", "United States Dollar",
@@ -93,6 +97,52 @@ public class AccountHelper {
             throw new OperationNotSupportedException("Insufficient funds in account ");
         }
     }
+public void validateAmount(double amount) throws Exception {
+        if(amount<=0) {
+            throw new IllegalArgumentException("Invalid amount");
+        }
+}
 
+public  void validateDifferentCurrencyType(ConvertDto convertDto) throws Exception{
+        if(convertDto.getToCurrency().equals(convertDto.getFromCurrency())){
+            throw new IllegalArgumentException("Conversion between the same currency type is not allowed");
+        }
+}
 
+public void validateAccountOwnership(ConvertDto convertDto, String uid) throws Exception {
+        accountRepository.findByCodeAndOwner_Uid(convertDto.getFromCurrency(), uid).orElseThrow();
+    accountRepository.findByCodeAndOwner_Uid(convertDto.getToCurrency(), uid).orElseThrow();
+}
+
+public void validateConversion(ConvertDto convertDto, String uid ) throws Exception{
+    validateDifferentCurrencyType(convertDto);
+    validateAmount(convertDto.getAmount());
+    validateAccountOwnership(convertDto, uid);
+    validateSufficientFunds(accountRepository.findByCodeAndOwner_Uid(convertDto.getFromCurrency(), uid).get(), convertDto.getAmount());
+}
+
+public Transaction convertCurrency(ConvertDto convertDto, User user) throws Exception {
+    validateConversion(convertDto, user.getUid());
+    var rates = exchangeRateService.getRates();
+    var sendingRates = rates.get(convertDto.getFromCurrency());
+    var receivingRates = rates.get(convertDto.getToCurrency());
+    var computedAmount = (receivingRates / sendingRates) * convertDto.getAmount();
+    var fromAccount = accountRepository.findByCodeAndOwner_Uid(convertDto.getFromCurrency(), user.getUid()).get();
+    var toAccount = accountRepository.findByCodeAndOwner_Uid(convertDto.getToCurrency(), user.getUid()).get();
+    fromAccount.setBalance(fromAccount.getBalance() - (convertDto.getAmount() * 1.01));
+    toAccount.setBalance(toAccount.getBalance() + computedAmount);
+    accountRepository.saveAll(List.of(fromAccount, toAccount));
+
+    var transaction = Transaction.builder()
+            .txId(UUID.randomUUID().toString() + "-CONV") // This is where you ask me to add a suffix
+            .account(fromAccount)
+            .txFee(convertDto.getAmount() * 0.01)
+            .amount(convertDto.getAmount())
+            .status(Status.COMPLETED)
+            .description("Conversion from " + convertDto.getFromCurrency() + " to " + convertDto.getToCurrency())
+            .type(Type.CONVERSION)
+            .owner(user)
+            .build();
+    return transactionRepository.save(transaction);
+}
 }

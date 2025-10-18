@@ -45,6 +45,5 @@ public class ExchangeRateService {
         }
 
         System.out.println("Rates: " + rates);
-        System.out.println("Currencies: " + rates.keySet());
     }
 }
